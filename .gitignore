@@ -9,7 +9,6 @@ __pycache__/
 # Local corpora and generated artifacts
 data/
 runs/
-enhanced_test/
 logs/
 *.pt
 *.pth
@@ -17,4 +16,3 @@ logs/
 
 # Keep the distributed baseline checkpoint.
 !checkpoints/mini_bsrnn_best.ckpt
-

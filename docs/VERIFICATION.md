@@ -22,12 +22,12 @@ CUDA_VISIBLE_DEVICES=0 python scripts/train.py \
 Result: one real dynamic-mixing training batch and one deterministic validation
 batch completed on GPU without non-finite values.
 
-## Portable checkpoint and inference
+## Portable checkpoint and validation inference
 
 The included checkpoint contains tensor state only; it does not pickle training
-configuration classes. A 16-kHz mono PCM-16 WAV was enhanced on CPU with
-the standalone repository. The output was verified as mono, 16 kHz, PCM-16 WAV,
-with exactly the same number of frames as the input.
+configuration classes. A deterministic validation mixture was enhanced on CPU
+with the standalone repository. The clean, noisy and enhanced outputs were
+verified as mono, 16 kHz, PCM-16 WAV with matching lengths.
 
 ## Metrics smoke test
 

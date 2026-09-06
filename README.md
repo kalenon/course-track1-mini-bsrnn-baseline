@@ -2,7 +2,7 @@
 
 这是“通用语音增强”课程赛题的可执行参考基线。任务说明见
 [大作业 Track 1 PDF](docs/大作业_track1.pdf)。本仓库提供从数据清单、动态混合、四卡训练，
-到盲测批量推理、四项客观指标和复杂度统计的最小闭环。
+到确定性内部验证、四项客观指标和复杂度统计的最小闭环。
 
 本项目是为课程作业独立整理的 Mini-BSRNN 教学基线，固定采用 16 kHz、64 维、2 层的
 小规模结构。它用于跑通训练、推理与评测闭环，不兼容任何外部大型语音增强模型的权重。
@@ -14,13 +14,13 @@
 | 输入 | 单通道、16 kHz、WAV；不符合时直接报错 |
 | 输出 | 单通道、16 kHz、PCM-16 WAV |
 | 长度 | 每个输出的采样点数与对应输入严格一致 |
-| 推理 | 支持目录递归和 SCP 清单，支持离线 batch |
+| 验证 | 固定数据清单和随机种子，保存 clean/noisy/enhanced 三元组 |
 | 客观指标 | PESQ-WB、ESTOI、SI-SDR、UTMOS，逐文件计算后算术平均 |
 | 无效结果 | 缺失、损坏、格式或长度错误时按预先公布的最低值计分 |
 | 效率口径 | batch size 1、单通道、16 kHz，报告参数量和 GMAC/s |
 
-最终盲测只能使用冻结模型，提交 WAV 文件名和相对目录必须与输入一致。不要对盲测结果
-做基于干净参考的后验对齐。
+内部验证集由固定语音、噪声和 RIR 清单确定，并使用固定随机种子生成，保证不同 checkpoint
+在完全相同的验证样本上比较。
 
 ## 2. 模型
 
@@ -142,56 +142,38 @@ sha256sum -c CHECKSUMS.sha256
 该文件是去除优化器状态和训练配置对象后的可移植纯权重包（epoch 30、global step
 16,500），可用于环境检查、推理接口自检和复现参考分数。
 
-## 7. 严格 16 kHz 批量推理
+## 7. 跑通完整验证
 
-盲测目录推理（递归保持文件名和相对目录）：
+下面的一条命令会使用配置中的内部验证清单生成固定混合，加载 checkpoint 完成增强，保存
+clean/noisy/enhanced 三元组，并计算 PESQ-WB、ESTOI、SI-SDR 和 UTMOS：
 
 ```bash
-bash scripts/infer.sh \
-  /path/to/blind_test \
-  enhanced_test \
+DEVICE=cuda bash scripts/validate.sh \
   checkpoints/mini_bsrnn_best.ckpt \
-  --device cuda --batch-size 1
-```
-
-也可以通过 `--input-scp path/to/wav.scp` 输入多个文件。输出清单固定写到
-`enhanced_test/enhanced.scp`。脚本不会把 16 kHz 输出再次上采样，也默认不做峰值归一化。
-
-推理后可快速检查：
-
-```bash
-python - <<'PY'
-from pathlib import Path
-import soundfile as sf
-for path in Path('enhanced_test').rglob('*.wav'):
-    info = sf.info(path)
-    assert info.samplerate == 16000 and info.channels == 1
-print('format check passed')
-PY
-```
-
-## 8. 验证集四项客观指标
-
-准备干净参考清单 `reference.scp` 和推理生成的 `enhanced.scp`，两者 ID 必须一致：
-
-```bash
-bash scripts/evaluate.sh \
-  data/validation/reference.scp \
-  enhanced_validation/enhanced.scp \
-  logs/metrics_and_complexity/validation \
-  --device cuda
+  runs/validation
 ```
 
 输出包括：
 
-- `metrics.csv`：逐文件 PESQ、ESTOI、SI-SDR、UTMOS 和有效性状态；
-- `summary.json`：样本数、惩罚样本数、均值及惩罚值；
-- `RESULTS.txt`：便于粘贴进报告的总体结果。
+- `runs/validation/{clean,noisy,enhanced}/`：256 组三元组音频；
+- `runs/validation/manifests/`：三类音频各自的 SCP 清单；
+- `runs/validation/validation_run.json`：验证规模、随机种子和 checkpoint 记录；
+- `runs/validation/metrics/metrics.csv`：逐文件四项指标；
+- `runs/validation/metrics/summary.json` 和 `RESULTS.txt`：指标均值。
+
+先做 4 条样本的 CPU 快速检查时，可以跳过 UTMOS：
+
+```bash
+DEVICE=cpu VALIDATION_LIMIT=4 bash scripts/validate.sh \
+  checkpoints/mini_bsrnn_best.ckpt \
+  runs/validation_smoke \
+  --skip-utmos
+```
 
 默认无效文件惩罚为 PESQ=-0.5、ESTOI=0、SI-SDR=-50 dB、UTMOS=1。课程组若发布新的
 统一下限，应以课程组口径为准，并对所有系统一致重算。
 
-## 9. 参数量和计算量
+## 8. 参数量和计算量
 
 ```bash
 python scripts/complexity.py \
@@ -202,7 +184,7 @@ python scripts/complexity.py \
 输出应连同命令和日志一起放入最终提交。该命令的输入口径正是 PDF 要求的 batch size 1、
 单通道、16 kHz、每秒 GMAC。
 
-## 10. 自检
+## 9. 自检
 
 ```bash
 python -m unittest discover -s tests -v
@@ -211,22 +193,20 @@ python scripts/train.py --config configs/mini_bsrnn.yaml --devices 1 --fast-dev-
 
 第二条命令需要先完成数据清单准备。第一条不需要语料或 GPU。
 
-## 11. 推荐提交结构
+## 10. 建议实验产物
 
 ```text
 team_<编号>/
 ├── README.md
 ├── src/
-├── scripts/infer.sh
 ├── checkpoints/
-├── enhanced_test/
+├── runs/validation/
 ├── logs/metrics_and_complexity/
 └── team_<编号>_report.pdf
 ```
 
-报告应覆盖摘要、全部数据来源与规模、划分和混合策略、模型与损失、验证指标、盲测结果、
-参数量、GMAC/s、主要创新、局限和参考文献。主观测听由课程组匿名化系统并随机化样例后
-组织，Track 1 样本由 Track 2 同学交叉评价。
+报告应覆盖摘要、全部数据来源与规模、划分和混合策略、模型与损失、验证指标、参数量、
+GMAC/s、主要创新、局限和参考文献。
 
 ## License
 
