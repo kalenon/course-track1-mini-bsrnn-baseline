@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "course-track1-mini-bsrnn"
+version = "1.0.0"
+description = "A fixed-16-kHz Mini-BSRNN baseline for the speech enhancement course Track 1"
+readme = "README.md"
+requires-python = ">=3.10,<3.12"
+license = {file = "LICENSE"}
+dependencies = [
+  "numpy>=1.23,<2.0",
+  "PyYAML>=6.0",
+  "scipy>=1.10",
+  "soundfile>=0.12",
+  "torch>=2.2,<2.7",
+  "pytorch-lightning>=2.2,<2.6",
+  "tensorboard>=2.14",
+  "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+evaluation = [
+  "pesq>=0.0.4",
+  "pystoi>=0.4.1",
+]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

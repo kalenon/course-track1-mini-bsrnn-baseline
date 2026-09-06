@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+
+# Local corpora and generated artifacts
+data/
+runs/
+enhanced_test/
+logs/
+*.pt
+*.pth
+*.ckpt
+
+# Keep the distributed baseline checkpoint.
+!checkpoints/mini_bsrnn_best.ckpt
+

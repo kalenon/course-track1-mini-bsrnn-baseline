@@ -1,0 +1,95 @@
+{
+  "speech": {
+    "train_sources": [
+      "TIMIT train",
+      "WSJ0 si_tr_s"
+    ],
+    "validation_source": "WSJ0 si_dt_05 (even deterministic subset)"
+  },
+  "noise": {
+    "train": "WHAM! tr",
+    "validation": "WHAM! cv"
+  },
+  "rir": "record_RIR_with_T60_distance, stable 90/10 file split",
+  "redistribution": "No corpus audio is copied or redistributed.",
+  "manifests": {
+    "train_clean": {
+      "utterances": 17396,
+      "hours": 28.8563,
+      "sample_rates": [
+        16000
+      ],
+      "channels": [
+        1
+      ]
+    },
+    "valid_clean": {
+      "utterances": 256,
+      "hours": 0.4736,
+      "sample_rates": [
+        16000
+      ],
+      "channels": [
+        1
+      ]
+    },
+    "train_noise": {
+      "utterances": 20000,
+      "hours": 58.0314,
+      "sample_rates": [
+        16000
+      ],
+      "channels": [
+        2
+      ]
+    },
+    "valid_noise": {
+      "utterances": 5000,
+      "hours": 14.6528,
+      "sample_rates": [
+        16000
+      ],
+      "channels": [
+        2
+      ]
+    },
+    "train_rir": {
+      "utterances": 3010,
+      "hours": 1.0598,
+      "sample_rates": [
+        16000,
+        32000,
+        48000
+      ],
+      "channels": [
+        1
+      ]
+    },
+    "valid_rir": {
+      "utterances": 335,
+      "hours": 0.1192,
+      "sample_rates": [
+        16000,
+        32000,
+        48000
+      ],
+      "channels": [
+        1
+      ]
+    }
+  },
+  "mixing": {
+    "target_sample_rate": 16000,
+    "snr_db": [
+      -5.0,
+      20.0
+    ],
+    "reverberation_probability": 0.5,
+    "segment_samples": 32000,
+    "augmentations": [
+      "bandwidth limitation",
+      "clipping",
+      "packet loss"
+    ]
+  }
+}

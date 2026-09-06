@@ -1,0 +1,32 @@
+seed: 2024
+sample_rate: 16000
+segment_samples: 32000
+
+model:
+  embedding_dim: 64
+  num_layers: 2
+
+data:
+  train_clean_scp: data/manifests/train_clean.scp
+  valid_clean_scp: data/manifests/valid_clean.scp
+  train_noise_scp: data/manifests/train_noise.scp
+  valid_noise_scp: data/manifests/valid_noise.scp
+  train_rir_scp: data/manifests/train_rir.scp
+  valid_rir_scp: data/manifests/valid_rir.scp
+  reverberation_probability: 0.5
+  snr_db: [-5.0, 20.0]
+  bandwidth_probability: 0.25
+  clipping_probability: 0.25
+  packet_loss_probability: 0.25
+
+training:
+  batch_size_per_gpu: 8
+  num_workers: 2
+  epochs: 80
+  learning_rate: 0.001
+  weight_decay: 0.000001
+  gradient_clip: 0.5
+  devices: 4
+  precision: 32
+  output_dir: runs/mini_bsrnn
+
