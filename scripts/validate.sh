@@ -2,8 +2,11 @@
 set -euo pipefail
 
 checkpoint=${1:-checkpoints/mini_bsrnn_best.ckpt}
-output_dir=${2:-runs/validation}
-if [[ $# -ge 2 ]]; then
+data_dir=${2:-data/validation_1000}
+output_dir=${3:-runs/validation_1000}
+if [[ $# -ge 3 ]]; then
+  shift 3
+elif [[ $# -eq 2 ]]; then
   shift 2
 elif [[ $# -eq 1 ]]; then
   shift 1
@@ -12,8 +15,8 @@ fi
 device=${DEVICE:-cuda}
 batch_size=${VALIDATION_BATCH_SIZE:-1}
 validate_args=(
-  --config configs/mini_bsrnn.yaml
   --checkpoint "${checkpoint}"
+  --data-dir "${data_dir}"
   --output-dir "${output_dir}"
   --device "${device}"
   --batch-size "${batch_size}"

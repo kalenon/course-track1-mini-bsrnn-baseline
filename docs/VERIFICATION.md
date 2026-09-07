@@ -22,18 +22,20 @@ CUDA_VISIBLE_DEVICES=0 python scripts/train.py \
 Result: one real dynamic-mixing training batch and one deterministic validation
 batch completed on GPU without non-finite values.
 
-## Portable checkpoint and validation inference
+## Labeled validation preparation and inference
 
-The included checkpoint contains tensor state only; it does not pickle training
-configuration classes. A deterministic validation mixture was enhanced on CPU
-with the standalone repository. The clean, noisy and enhanced outputs were
-verified as mono, 16 kHz, PCM-16 WAV with matching lengths.
+The 1000-pair archive checksum, ZIP CRC, utterance IDs and original sample rates
+are checked before preparation. A 48-kHz noisy/clean pair was resampled to 16 kHz
+and enhanced on CPU with the included tensor-only checkpoint. The clean, noisy
+and enhanced outputs were verified as mono, 16-kHz WAV files with matching frame
+counts.
 
 ## Metrics smoke test
 
-PESQ-WB, ESTOI, SI-SDR and UTMOS were run on the enhanced smoke-test file. All
-four metrics completed and `num_penalized` was zero. This is an execution check,
-not a meaningful quality benchmark.
+PESQ-WB, ESTOI and SI-SDR were run on the enhanced smoke-test file and
+`num_penalized` was zero. UTMOS had already been tested separately with the same
+evaluation entry point. A one-file smoke test is an execution check, not a
+meaningful quality benchmark; the reported course result must use all 1000 pairs.
 
 ## Complexity
 

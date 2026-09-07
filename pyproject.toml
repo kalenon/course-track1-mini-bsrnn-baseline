@@ -22,6 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 evaluation = [
+  "gdown>=5.2",
   "pesq>=0.0.4",
   "pystoi>=0.4.1",
 ]
@@ -32,4 +33,3 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

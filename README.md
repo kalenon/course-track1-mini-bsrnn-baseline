@@ -1,8 +1,8 @@
 # 语音信号处理大作业 Track 1：Mini-BSRNN Baseline
 
 这是“通用语音增强”课程赛题的可执行参考基线。任务说明见
-[大作业 Track 1 PDF](docs/大作业_track1.pdf)。本仓库提供从数据清单、动态混合、四卡训练，
-到确定性内部验证、四项客观指标和复杂度统计的基本流程。
+[大作业 Track 1 PDF](docs/大作业%20track%201.pdf)。本仓库提供从数据清单、动态混合、四卡训练，
+到 1000 条带真值验证、四项客观指标和复杂度统计的基本流程。
 
 本项目是为课程作业独立整理的 Mini-BSRNN 教学基线，固定采用 16 kHz、64 维、2 层的
 小规模结构。它用于跑通训练、推理与评测闭环，不兼容任何外部大型语音增强模型的权重。
@@ -14,13 +14,13 @@
 | 输入 | 单通道、16 kHz、WAV格式 |
 | 输出 | 单通道、16 kHz、WAV格式 |
 | 长度 | 每个输出的采样点数与对应输入严格一致 |
-| 验证 | 固定数据清单和随机种子，保存 clean/noisy/enhanced 三元组 |
+| 验证 | 1000 对带真值音频，保存 clean/noisy/enhanced 对应关系 |
 | 客观指标 | PESQ-WB、ESTOI、SI-SDR、UTMOS，逐文件计算后算术平均 |
 | 无效结果 | 缺失、损坏、格式或长度错误时按最低值计分 |
 | 效率验证 | batch size 1、单通道、16 kHz，报告参数量和 GMAC/s |
 
-内部验证集由固定语音、噪声和 RIR 清单确定，并使用固定随机种子生成，保证不同 checkpoint
-在完全相同的验证样本上比较。
+训练阶段使用 256 条内部样本计算 `val_loss` 并选择 checkpoint；最终客观指标统一在另行
+提供的 1000 对 noisy/clean 音频上计算，保证不同模型使用相同输入和干净参考。
 
 ## 2. 模型
 
@@ -109,24 +109,65 @@ SHA256 632b3d0a8a3e9d27884a8fd2d500457211754fae3e0b37460463891c88c42aa9
 该文件是去除优化器状态和训练配置对象后的可移植纯权重包（epoch 30、global step
 16,500），可用于环境检查、推理接口自检和复现参考分数。
 
-## 7. 跑通完整验证
+## 7. 1000 条带真值验证集上的完整验证
 
-下面的一条命令会使用配置中的内部验证清单生成固定混合，加载 checkpoint 完成增强，保存
-clean/noisy/enhanced 三元组，并计算 PESQ-WB、ESTOI、SI-SDR 和 UTMOS：
+### 7.1 下载并校验
+
+验证集包含 1000 对单声道 noisy/clean FLAC，总时长约 2.46 小时。原始音频包含
+16、22.05、24、32、44.1 和 48 kHz 六种采样率，压缩包约 1.22 GB。
 
 ```bash
-DEVICE=cuda bash scripts/validate.sh \
-  checkpoints/mini_bsrnn_best.ckpt \
-  runs/validation
+bash scripts/download_validation.sh
 ```
 
+也可以从 [验证集下载页面](https://drive.google.com/file/d/1dPezrikPASvS2XfvceBF9VStflx3iVNj/view)
+手动下载到 `data/downloads/validation_1000.zip`。脚本会核对压缩包 SHA256：
+
+```text
+edd77dccb6cc1d7c273f2a05a8daee0d26956bc748ac2472a1f9f7305a896080
+```
+
+### 7.2 准备固定 16 kHz 评测音频
+
+Mini-BSRNN 固定使用 16 kHz，因此需要对 noisy 和对应 clean 使用同一种重采样规则，并
+保持每一对音频严格等长。本仓库报告的是统一 16 kHz 后的课程指标，不能与直接在原始
+多采样率音频上计算的数值混用：
+
+```bash
+python scripts/prepare_validation.py \
+  --archive data/downloads/validation_1000.zip \
+  --output-dir data/validation_1000
+```
+
+准备完成后会得到 `clean/`、`noisy/`、`clean.scp`、`noisy.scp` 和记录原始采样率分布及
+转换方式的 `dataset_summary.json`。
+
+### 7.3 增强并计算四项指标
+
+```bash
+DEVICE=cuda VALIDATION_BATCH_SIZE=1 bash scripts/validate.sh \
+  checkpoints/mini_bsrnn_best.ckpt \
+  data/validation_1000 \
+  runs/validation_1000
+```
+
+命令会依次完成 1000 条 noisy 音频增强，以及 PESQ-WB、ESTOI、SI-SDR 和 UTMOS 计算。
 输出包括：
 
-- `runs/validation/{clean,noisy,enhanced}/`：256 组三元组音频；
-- `runs/validation/manifests/`：三类音频各自的 SCP 清单；
-- `runs/validation/validation_run.json`：验证规模、随机种子和 checkpoint 记录；
-- `runs/validation/metrics/metrics.csv`：逐文件四项指标；
-- `runs/validation/metrics/summary.json` 和 `RESULTS.txt`：指标均值。
+- `runs/validation_1000/enhanced/`：模型输出 WAV；
+- `runs/validation_1000/manifests/`：clean/noisy/enhanced 一一对应的 SCP；
+- `runs/validation_1000/validation_run.json`：checkpoint 和验证数据记录；
+- `runs/validation_1000/metrics/metrics.csv`：逐文件四项指标；
+- `runs/validation_1000/metrics/summary.json` 和 `RESULTS.txt`：1000 条样本的指标均值。
+
+调试流程时可以只跑第一条，并跳过需要额外模型的 UTMOS；该结果不能作为完整验证结果：
+
+```bash
+python scripts/prepare_validation.py --limit 1
+DEVICE=cpu VALIDATION_LIMIT=1 bash scripts/validate.sh \
+  checkpoints/mini_bsrnn_best.ckpt data/validation_1000 runs/validation_smoke \
+  --skip-utmos
+```
 
 ## 8. 参数量和计算量
 
@@ -146,7 +187,7 @@ team_<编号>/
 ├── README.md
 ├── src/
 ├── checkpoints/
-├── runs/validation/
+├── runs/validation_1000/
 ├── logs/metrics_and_complexity/
 └── team_<编号>_report.pdf
 ```
