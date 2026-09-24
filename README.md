@@ -1,9 +1,9 @@
 # 语音信号处理大作业 Track 1：Mini-BSRNN Baseline
 
-课程当前评分使用 PESQ-WB、ESTOI、DNSMOS-OVRL 与 UTMOS；完整复现与盲测命令见 [课程复现指南](COURSE_GUIDE.md)，1000 条验证集的实测值见 [参考成绩](BASELINE_RESULTS.md)。下文旧版 SI-SDR 验证流程保留为辅助分析，不作为当前四项评分结果。
+课程当前评分使用 PESQ-WB、ESTOI、DNSMOS-OVRL 与 UTMOS；完整复现与盲测命令见 [课程复现指南](COURSE_GUIDE.md)，1000 条验证集的实测值见 [参考成绩](BASELINE_RESULTS.md)。
 
 这是“通用语音增强”课程赛题的可执行参考基线。任务说明见
-[大作业 Track 1 PDF](docs/大作业%20track%201.md)。本仓库提供从数据清单、动态混合、训练，
+[大作业 Track 1](docs/大作业%20track%201.md)。本仓库提供从数据清单、动态混合、训练，
 到 1000 条带真值验证、四项客观指标和复杂度统计的基本流程。
 
 本项目是为课程作业独立整理的 Mini-BSRNN 教学基线，固定采用 16 kHz、64 维、2 层的
@@ -102,9 +102,7 @@ tensorboard --logdir runs/mini_bsrnn
 
 ```text
 checkpoints/mini_bsrnn_best.ckpt
-SHA256 632b3d0a8a3e9d27884a8fd2d500457211754fae3e0b37460463891c88c42aa9
 ```
-
 
 该文件是去除优化器状态和训练配置对象后的可移植纯权重包（epoch 30、global step
 16,500），可用于环境检查、推理接口自检和复现参考分数。
@@ -121,11 +119,7 @@ bash scripts/download_validation.sh
 ```
 
 也可以从 [验证集下载页面](https://drive.google.com/file/d/1dPezrikPASvS2XfvceBF9VStflx3iVNj/view)
-手动下载到 `data/downloads/validation_1000.zip`。脚本会核对压缩包 SHA256：
-
-```text
-edd77dccb6cc1d7c273f2a05a8daee0d26956bc748ac2472a1f9f7305a896080
-```
+手动下载到 `data/downloads/validation_1000.zip`。
 
 ### 7.2 准备固定 16 kHz 评测音频
 
