@@ -1,11 +1,13 @@
 # 语音信号处理大作业 Track 1：Mini-BSRNN Baseline
 
+课程当前评分使用 PESQ-WB、ESTOI、DNSMOS-OVRL 与 UTMOS；完整复现与盲测命令见 [课程复现指南](COURSE_GUIDE.md)，1000 条验证集的实测值见 [参考成绩](BASELINE_RESULTS.md)。下文旧版 SI-SDR 验证流程保留为辅助分析，不作为当前四项评分结果。
+
 这是“通用语音增强”课程赛题的可执行参考基线。任务说明见
-[大作业 Track 1 PDF](docs/大作业%20track%201.pdf)。本仓库提供从数据清单、动态混合、四卡训练，
+[大作业 Track 1 PDF](docs/大作业%20track%201.md)。本仓库提供从数据清单、动态混合、训练，
 到 1000 条带真值验证、四项客观指标和复杂度统计的基本流程。
 
 本项目是为课程作业独立整理的 Mini-BSRNN 教学基线，固定采用 16 kHz、64 维、2 层的
-小规模结构。它用于跑通训练、推理与评测闭环，不兼容任何外部大型语音增强模型的权重。
+小规模结构。它用于跑通训练、推理与评测闭环。
 
 ## 1. 课程硬性规范
 
@@ -15,7 +17,7 @@
 | 输出 | 单通道、16 kHz、WAV格式 |
 | 长度 | 每个输出的采样点数与对应输入严格一致 |
 | 验证 | 1000 对带真值音频，保存 clean/noisy/enhanced 对应关系 |
-| 客观指标 | PESQ-WB、ESTOI、SI-SDR、UTMOS，逐文件计算后算术平均 |
+| 客观指标 | PESQ-WB、ESTOI、DNSMOS-OVRL、UTMOS，逐文件计算后算术平均 |
 | 无效结果 | 缺失、损坏、格式或长度错误时按最低值计分 |
 | 效率验证 | batch size 1、单通道、16 kHz，报告参数量和 GMAC/s |
 
@@ -26,7 +28,7 @@
 
 Mini-BSRNN 保留频带切分、时间/频率轴交替双向 LSTM，以及复数掩码加复数残差解码：
 模型设计主要参考 BSRNN 在单通道语音增强中的两项工作 [1, 2]，本仓库在此基础上缩小
-embedding 和循环层数，并固定为 16 kHz 教学配置。
+embedding 和循环层数，并固定为 16 kHz 配置。
 
 | 配置 | 数值 |
 |---|---:|
@@ -55,26 +57,24 @@ UTMOS 第一次运行会从 `tarepan/SpeechMOS:v1.2.0` 下载课程指定的
 
 ## 4. 数据准备与声明
 
-基线数据声明见
-[docs/baseline_data_statement.json](docs/baseline_data_statement.json)：训练干净语音
-17,396 条 / 28.8563 小时，内部验证语音 256 条 / 0.4736 小时；训练噪声
-20,000 条 / 58.0314 小时，验证噪声 5,000 条 / 14.6528 小时；训练与验证 RIR
-分别为 3,010 和 335 条。WHAM! 原始噪声是双声道，动态混合时明确取双声道均值转为
-单声道；RIR 的 16/32/48 kHz 文件在使用时统一重采样到 16 kHz。
-
-在本工作区复现清单的命令如下；其他机器只需替换四个根目录：
+训练管线使用 LibriTTS 全部可用的 `train-*` 分割作为干净语音，`dev-*`
+中均匀抽取 256 条作为内部验证；噪声使用 WHAM! 的 `tr` / `cv`；
+RIR 使用 DNS_ICASSP2021 的 SLR26 和 SLR28，按文件稳定划分 90% 训练、
+10% 验证。音频在动态混合时统一转为单通道 16 kHz，不需要预先重采样。
+脚本会生成六份 `*.scp` 清单和 `data/manifests/data_statement.json`，其中记录
+本机实际文件数、时长和采样率。请替换以下四个数据根目录：
 
 ```bash
 python scripts/prepare_data.py \
-  --timit-root /data/Database/clean/speech/TIMIT \
-  --wsj-root /data/Database/clean/speech/WSJ \
-  --wham-root /data/Database/noise/wham \
-  --rir-root /data/Database/RIR/record_RIR_with_T60_distance \
+  --libritts-root /path/to/LibriTTS \
+  --wham-root /path/to/WHAM48kHz \
+  --slr26-root /path/to/DNS_ICASSP2021/datasets/impulse_responses/SLR26 \
+  --slr28-root /path/to/DNS_ICASSP2021/datasets/impulse_responses/SLR28 \
   --output-dir data/manifests \
   --validation-size 256
 ```
 
-当前简化基线没有实现 Codec 与其他失真模拟；这是明确保留的改进方向，建议在训练中加入各种退化类型。
+当前简化基线没有实现 Codec 与其他失真模拟；这是明确保留的改进方向，建议在训练中加入各种退化类型，也可以自行扩充数据集。
 
 ## 5. 四卡训练
 
@@ -142,7 +142,7 @@ python scripts/prepare_validation.py \
 准备完成后会得到 `clean/`、`noisy/`、`clean.scp`、`noisy.scp` 和记录原始采样率分布及
 转换方式的 `dataset_summary.json`。
 
-### 7.3 增强并计算四项指标
+### 7.3 历史辅助验证流程
 
 ```bash
 DEVICE=cuda VALIDATION_BATCH_SIZE=1 bash scripts/validate.sh \
@@ -151,7 +151,6 @@ DEVICE=cuda VALIDATION_BATCH_SIZE=1 bash scripts/validate.sh \
   runs/validation_1000
 ```
 
-命令会依次完成 1000 条 noisy 音频增强，以及 PESQ-WB、ESTOI、SI-SDR 和 UTMOS 计算。
 输出包括：
 
 - `runs/validation_1000/enhanced/`：模型输出 WAV；

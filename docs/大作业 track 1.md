@@ -4,7 +4,7 @@
 
 语音增强的目标是从受噪声、混响及其他失真影响的语音中恢复清晰、自然且易于理解的语音。传统语音增强系统通常只针对单一数据集或特定退化条件进行训练，在面对未知噪声、复杂失真以及不同说话人时，性能容易下降。本项赛题目标是构建一个单通道语音增强系统，以处理在不同失真和不同声学环境下的输入语音，要求使用一个统一模型处理加性噪声、混响、削波、带宽限制、Codec 失真、丢包和风噪等多种退化。
 
-学生需要完成数据准备、退化模拟、模型训练、语音增强和结果评价等完整流程，在提高语音质量和可懂度的同时，尽量保留语音内容、说话人特征及自然度。
+学生需要完成退化模拟、模型训练、语音增强和结果评价等完整流程，在提高语音质量和可懂度的同时，尽量保留语音内容、说话人特征及自然度。
 
 任务描述：给定一段退化的单通道语音 $x(t)$，系统输出增强语音 $\hat{s}(t)$，目标是在尽量保留说话内容、音色和自然度的同时，降低噪声、混响及其他干扰。默认评测采样率为 16 kHz；如模型内部使用其他采样率，提交前必须转换为规定格式。
 
@@ -27,12 +27,8 @@
 |---|---|---|---|
 | Speech | LibriTTS | 大规模英文朗读语音。 | [OpenSLR 60](https://www.openslr.org/60/) |
 | Speech | VCTK | 多说话人、多口音英文语音。 | [DataShare VCTK 0.92](https://datashare.ed.ac.uk/handle/10283/3443) |
-| Speech | Common Voice | 多语言众包语音；版本差异较大，应记录语种、版本和清洗标准。 | [Common Voice datasets](https://commonvoice.mozilla.org/en/datasets) |
-| Speech | ESD | 情感语音数据。 | [Emotional Speech Dataset](https://github.com/HLTSingapore/Emotional-Speech-Data) |
-| Noise | DNS 噪声数据 | 真实与合成环境噪声。 | [DNS5 noise/IR 下载脚本](https://github.com/microsoft/DNS-Challenge/blob/master/download-dns-challenge-5-noise-ir.sh) |
+| Noise | DEMAND | 多通道实录环境噪声。 | [DEMAND](https://zenodo.org/records/1227121) |
 | Noise | WHAM! | 与语音分离 / 增强常用数据配套的噪声。 | [WHAM!](https://wham.whisper.ai/) |
-| Noise | FSD50K | 通用声音事件数据。 | [Zenodo record 4060432](https://zenodo.org/records/4060432) |
-| Noise | FMA | 音乐噪声候选。 | [FMA GitHub](https://github.com/mdeff/fma) |
 | RIR | DNS5 Simulated RIRs | 用于卷积生成混响语音；建议覆盖不同 $T60$、房间尺寸和源麦距离；可自行生成 RIR 以扩展数据规模。 | [DNS5 noise/IR 下载脚本](https://github.com/microsoft/DNS-Challenge/blob/master/download-dns-challenge-5-noise-ir.sh) |
 
 ### 2.2 必须提交的数据声明

@@ -1,0 +1,4 @@
+pesq>=0.0.4
+pystoi>=0.4.1
+espnet>=202402
+onnxruntime>=1.17
