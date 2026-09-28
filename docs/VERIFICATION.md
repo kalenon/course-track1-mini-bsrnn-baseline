@@ -24,7 +24,7 @@ batch completed on GPU without non-finite values.
 
 ## Labeled validation preparation and inference
 
-The 1000-pair archive checksum, ZIP CRC, utterance IDs and original sample rates
+The 1000-pair archive ZIP CRC, utterance IDs and original sample rates
 are checked before preparation. A 48-kHz noisy/clean pair was resampled to 16 kHz
 and enhanced on CPU with the included tensor-only checkpoint. The clean, noisy
 and enhanced outputs were verified as mono, 16-kHz WAV files with matching frame

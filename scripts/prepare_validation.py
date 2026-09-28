@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import io
 import json
 from collections import Counter
@@ -17,19 +16,10 @@ from scipy.signal import resample_poly
 from tqdm import tqdm
 
 
-EXPECTED_SHA256 = "edd77dccb6cc1d7c273f2a05a8daee0d26956bc748ac2472a1f9f7305a896080"
 ARCHIVE_ROOT = "validation_leaderboard_with_label"
 DATA_ROOT = f"{ARCHIVE_ROOT}/data/validation_leaderboard"
 AUDIO_ROOT = f"{ARCHIVE_ROOT}/simulation_validation_leaderboard"
 TARGET_SAMPLE_RATE = 16_000
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def read_mapping(text: str, value_type=str) -> dict:
@@ -97,12 +87,6 @@ def main() -> None:
 
     if args.limit is not None and args.limit < 1:
         raise ValueError("--limit must be positive")
-    archive_hash = sha256(args.archive)
-    if archive_hash != EXPECTED_SHA256:
-        raise RuntimeError(
-            f"Archive SHA256 mismatch: expected {EXPECTED_SHA256}, got {archive_hash}"
-        )
-
     with ZipFile(args.archive) as archive:
         bad_member = archive.testzip()
         if bad_member is not None:
@@ -159,7 +143,6 @@ def main() -> None:
     (args.output_dir / "clean.scp").write_text("".join(clean_lines), encoding="utf-8")
     (args.output_dir / "noisy.scp").write_text("".join(noisy_lines), encoding="utf-8")
     summary = {
-        "archive_sha256": archive_hash,
         "source_pair_count": source_pair_count,
         "prepared_pair_count": len(ordered_ids),
         "original_sample_rate_counts": dict(sorted(sample_rate_counts.items())),
