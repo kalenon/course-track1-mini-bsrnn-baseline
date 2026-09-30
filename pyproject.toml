@@ -10,13 +10,13 @@ readme = "README.md"
 
 license = {file = "LICENSE"}
 dependencies = [
-  "numpy>=1.23,<2.0",
-  "PyYAML>=6.0",
-  "scipy>=1.10",
-  "soundfile>=0.12",
+  "numpy",
+  "PyYAML",
+  "scipy",
+  "soundfile",
   "pytorch-lightning",
   "tensorboard",
-  "tqdm>=4.66",
+  "tqdm",
 ]
 
 [project.optional-dependencies]
